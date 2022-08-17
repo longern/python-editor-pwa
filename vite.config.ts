@@ -9,6 +9,7 @@ export default defineConfig({
     VitePWA({
       manifest: {
         name: "Python Editor PWA",
+        short_name: "PyEditor",
         icons: [
           {
             src: "/favicon.png",

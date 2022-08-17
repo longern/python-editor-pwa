@@ -3,7 +3,8 @@ import { basicSetup, EditorView } from "codemirror";
 import { python } from "@codemirror/lang-python";
 import { onMounted, ref } from "vue";
 
-const pyodide = ref<any>(null);
+import { runPython } from "./pyworker";
+
 const editorElement = ref<HTMLElement | null>(null);
 let editor: EditorView | null = null;
 
@@ -12,19 +13,18 @@ onMounted(() => {
     extensions: [basicSetup, python()],
     parent: editorElement.value as HTMLElement,
   });
-  (window as any).loadPyodide().then((pyo: any) => (pyodide.value = pyo));
 });
 
-async function runPython() {
+async function run() {
   if (!editor) return;
-  pyodide.value.runPython(editor.state.doc.toString());
+  runPython(editor.state.doc.toString(), {});
 }
 </script>
 
 <template>
   <div ref="editorElement" class="editor"></div>
   <div class="mobile-toolbar">
-    <button @click="runPython" :disabled="!pyodide">Run</button>
+    <button @click="run">Run</button>
   </div>
 </template>
 
