@@ -3,10 +3,13 @@ import { basicSetup, EditorView } from "codemirror";
 import { python } from "@codemirror/lang-python";
 import { onMounted, ref } from "vue";
 
-import { runPython } from "./pyworker";
+import { PythonProcess } from "./pyworker";
 
 const editorElement = ref<HTMLElement | null>(null);
 let editor: EditorView | null = null;
+const showTerminal = ref(false);
+const terminal = ref("");
+const askForInput = ref(false);
 
 onMounted(() => {
   editor = new EditorView({
@@ -17,7 +20,16 @@ onMounted(() => {
 
 async function run() {
   if (!editor) return;
-  runPython(editor.state.doc.toString(), {});
+  terminal.value = "";
+  showTerminal.value = true;
+  const process = new PythonProcess(editor.state.doc.toString());
+  process.onstdin = async () => {
+    askForInput.value = true;
+    return "test";
+  };
+  process.onstdout = process.onstderr = (data: string) => {
+    terminal.value += data;
+  };
 }
 </script>
 
@@ -26,6 +38,12 @@ async function run() {
   <div class="mobile-toolbar">
     <button @click="run">Run</button>
   </div>
+  <div
+    v-if="showTerminal"
+    v-text="terminal"
+    class="terminal"
+    @click="showTerminal = false"
+  ></div>
 </template>
 
 <style>
@@ -46,5 +64,18 @@ async function run() {
 .mobile-toolbar {
   height: 48px;
   flex-shrink: 0;
+}
+
+.terminal {
+  position: fixed;
+  background-color: black;
+  color: white;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  white-space: pre;
+  font-family: monospace;
 }
 </style>

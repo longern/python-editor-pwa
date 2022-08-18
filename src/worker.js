@@ -1,21 +1,46 @@
 importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.0/full/pyodide.js");
 
+const messageDispatcher = {};
+const utf8decoder = new TextDecoder();
+
+function addMessageListener(type, handler) {
+  messageDispatcher[type] = handler;
+}
+
 async function loadPyodideAndPackages() {
-  self.pyodide = await loadPyodide();
+  self.pyodide = await loadPyodide({
+    stdout: (msg) => {
+      if (msg === "Python initialization complete") return;
+      self.postMessage({ type: "stdout", data: msg + "\n" });
+    },
+    stderr: (msg) => {
+      self.postMessage({ type: "stderr", data: msg + "\n" });
+    },
+    stdin: () => {
+      self.postMessage({ type: "stdin" });
+      Atomics.wait(self.stdinLock, 0, 0);
+      return utf8decoder.decode(self.stdinBuffer.slice(0));
+    },
+  });
 }
 let pyodideReadyPromise = loadPyodideAndPackages();
 
-self.onmessage = async (event) => {
+addMessageListener("run", async (data) => {
   // make sure loading is done
   await pyodideReadyPromise;
-  // Don't bother yet with this line, suppose our API is built in such a way:
-  const { id, python } = event.data;
-  // Now is the easy part, the one that is similar to working in the main thread:
+  const { id, python, stdinBuffer, stdinLock } = data;
+  self.stdinLock = new Int32Array(stdinLock);
+  self.stdinBuffer = new Uint8Array(stdinBuffer);
   try {
     await self.pyodide.loadPackagesFromImports(python);
-    let results = await self.pyodide.runPythonAsync(python);
-    self.postMessage({ id, results });
+    await self.pyodide.runPythonAsync(python);
+    self.postMessage({ type: "exit", id });
   } catch (error) {
-    self.postMessage({ id, error: error.message });
+    self.postMessage({ type: "error", id, error: error.message });
   }
+});
+
+self.onmessage = async (event) => {
+  const handler = messageDispatcher[event.data.type];
+  handler(event.data);
 };
