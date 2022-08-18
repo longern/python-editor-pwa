@@ -36,7 +36,7 @@ async function run() {
 <template>
   <div ref="editorElement" class="editor"></div>
   <div class="mobile-toolbar">
-    <button @click="run">Run</button>
+    <button class="run-btn" @click="run">Run</button>
   </div>
   <div
     v-if="showTerminal"
@@ -66,6 +66,11 @@ async function run() {
   flex-shrink: 0;
 }
 
+.run-btn {
+  width: 100%;
+  height: 100%;
+}
+
 .terminal {
   position: fixed;
   background-color: black;
@@ -75,7 +80,8 @@ async function run() {
   width: 100%;
   height: 100%;
   padding: 8px;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-family: monospace;
 }
 </style>
