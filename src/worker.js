@@ -1,4 +1,4 @@
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.0/full/pyodide.js");
+importScripts("https://pe.longern.com/pyodide/v0.21.0/full/pyodide.js");
 
 const messageDispatcher = {};
 const utf8decoder = new TextDecoder();
