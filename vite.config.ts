@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
+      registerType: "autoUpdate",
       manifest: {
         name: "Python Editor PWA",
         short_name: "PyEditor",
