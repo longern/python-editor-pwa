@@ -50,7 +50,7 @@ async function run() {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
 }
 
 .editor {
@@ -82,6 +82,6 @@ async function run() {
   padding: 8px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-family: monospace;
+  overflow-y: auto;
 }
 </style>
