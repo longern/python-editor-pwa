@@ -1,14 +1,38 @@
-importScripts("https://pe.longern.com/pyodide/v0.21.0/full/pyodide.js");
+const scriptCache = {};
 
-const messageDispatcher = {};
-const utf8decoder = new TextDecoder();
+self.builtinImportScripts = self.importScripts;
+self.importScripts = function (...urls) {
+  urls.forEach((url) => {
+    if (url in scriptCache) self.builtinImportScripts(scriptCache[url]);
+    else self.builtinImportScripts(url);
+  });
+};
+self.importScripts.cache = async function (url) {
+  const script = await fetch(url).then((response) => response.text());
+  scriptCache[url] =
+    "data:text/javascript;charset=UTF-8," + encodeURIComponent(script);
+};
+
+const utf8Decoder = new TextDecoder();
 
 function addMessageListener(type, handler) {
-  messageDispatcher[type] = handler;
+  if (typeof addMessageListener.listeners === "undefined") {
+    addMessageListener.listeners = {};
+  }
+  addMessageListener.listeners[type] = handler;
 }
 
 async function loadPyodideAndPackages() {
+  const indexUrl = "https://cdn.jsdelivr.net/pyodide/v0.21.0/full/";
+  await Promise.all([
+    self.importScripts.cache(`${indexUrl}pyodide.js`),
+    self.importScripts.cache(`${indexUrl}pyodide.asm.js`),
+  ]);
+  importScripts(`${indexUrl}pyodide.js`);
+
   self.pyodide = await loadPyodide({
+    fullStdLib: false,
+    indexURL: indexUrl,
     stdout: (msg) => {
       if (msg === "Python initialization complete") return;
       self.postMessage({ type: "stdout", data: msg + "\n" });
@@ -19,7 +43,7 @@ async function loadPyodideAndPackages() {
     stdin: () => {
       self.postMessage({ type: "stdin" });
       Atomics.wait(self.stdinLock, 0, 0);
-      return utf8decoder.decode(self.stdinBuffer.slice(0));
+      return utf8Decoder.decode(self.stdinBuffer.slice(0));
     },
   });
 }
@@ -41,6 +65,5 @@ addMessageListener("run", async (data) => {
 });
 
 self.onmessage = async (event) => {
-  const handler = messageDispatcher[event.data.type];
-  handler(event.data);
+  addMessageListener.listeners[event.data.type](event.data);
 };

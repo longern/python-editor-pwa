@@ -11,7 +11,7 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
-            urlPattern: /\/pyodide\/.*/i,
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheableResponse: {
