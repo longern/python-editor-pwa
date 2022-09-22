@@ -83,5 +83,6 @@ async function run() {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   overflow-y: auto;
+  font-family: Consolas, monospace;
 }
 </style>
