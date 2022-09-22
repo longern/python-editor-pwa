@@ -25,7 +25,9 @@ async function run() {
   const process = new PythonProcess(editor.state.doc.toString());
   process.onstdin = async () => {
     askForInput.value = true;
-    return "test";
+    let input = null;
+    while (input === null) input = window.prompt();
+    return input;
   };
   process.onstdout = process.onstderr = (data: string) => {
     terminal.value += data;
